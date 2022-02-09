@@ -2,8 +2,8 @@ use nalgebra::vector;
 use parry3d_f64::math::Isometry;
 
 use crate::{
-    kernel::geometry::{Circle, Curve},
-    math::Point,
+    kernel::geometry::{Circle, Curve, Line},
+    math::{Point, Vector},
 };
 
 use super::vertices::Vertex;
@@ -94,6 +94,34 @@ impl Edge {
             vertices,
             reverse: false,
         }
+    }
+
+    /// Construct an edge by sweeping a vertex
+    ///
+    /// Only sweeps along the positive direction of the z axis are supported.
+    ///
+    /// You **MUST NOT** use this method to construct an instance of `Edge` that
+    /// represents and already existing edge. If you need an `Edge` instance
+    /// that refers to an existing edge, copy an existing `Edge` instance.
+    ///
+    /// This method creates a second vertex by calling [`Vertex::create_at`]
+    /// internally. You **MUST NOT** use this method to indirectly create a
+    /// `Vertex` instance that refers to an already existing vertex. If you have
+    /// two vertices and need an edge to connect them, use [`Edge::new`].
+    ///
+    /// Please refer to [`Vertex::create_at`] for an explanation of these
+    /// limitations.
+    #[allow(unused)]
+    pub fn sweep_vertex(vertex: Vertex<3>, path: Vector<1>) -> Self {
+        let line = Line {
+            origin: *vertex.location(),
+            direction: vector![0., 0., path.x],
+        };
+
+        let a = vertex;
+        let b = Vertex::create_at(line.origin + line.direction);
+
+        Self::new(Curve::Line(line), Some([a, b]))
     }
 
     /// Create a circle
